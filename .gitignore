@@ -4,3 +4,4 @@
 *.pth
 *.png
 __pycache__/
+medical_system.db
