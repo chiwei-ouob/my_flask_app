@@ -2,4 +2,5 @@
 /static/results
 /uploads
 *.pth
+*.png
 __pycache__/
