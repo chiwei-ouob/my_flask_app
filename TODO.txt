@@ -1,0 +1,14 @@
+模型架構: 
+my_flask_app/
+├── app.py
+├── classification/     <-- 分類模型在這裡
+├── models/             <-- 分割模型放這裡
+│   └──YOLOv8
+│      ├── seg_gbm.pt      <-- 原本的 GBM best.pt (來自 BT_segmentation/YOLOv8/models/GBM/weights/best.pt)
+│      ├── seg_mg.pt       <-- 原本的 MG best.pt
+│      └── seg_pt.pt       <-- 原本的 PT best.pt
+└── ...
+
+待辦事項: 
+1. 例外處理: 如果前面的分類模型判斷有腫瘤，但 YOLO v8 切割出來的遮罩全黑，
+    那麼就送進之前表現比較好的 Unet++ 試試看 (如 GBM 190，就是模型標記不出來的)

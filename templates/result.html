@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <title>分析結果 - 醫療影像分割系統</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .fade-in { animation: fadeIn 0.6s cubic-bezier(0.16, 1, 0.3, 1); }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        .loader { border: 3px solid rgba(255,255,255,0.3); border-radius: 50%; border-top: 3px solid #ffffff; width: 24px; height: 24px; animation: spin 1s linear infinite; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    </style>
+</head>
+
+<body class="bg-gray-50 min-h-screen flex flex-col items-center font-sans text-gray-700 pt-24 pb-10">
+    
+    <div class="fixed top-0 left-0 w-full bg-white/90 backdrop-blur-md z-50 shadow-sm border-b border-gray-200 transition-all duration-300">
+        <div class="max-w-6xl mx-auto px-8 h-16 flex justify-between items-center">
+            <div>
+                <h1 class="text-xl font-extrabold tracking-tight text-gray-900 flex items-center gap-2">
+                    <a href="{{ url_for('index') }}" class="flex items-center gap-2">
+                        <span class="text-blue-600 text-2xl">●</span> 醫療影像分割系統
+                    </a>
+                </h1>
+            </div>
+            
+            {% if current_user %}
+                <div class="relative group">
+                    <button class="flex items-center gap-2 text-gray-700 hover:text-blue-600 font-bold px-3 py-2 rounded-lg hover:bg-gray-50 transition">
+                        {{ current_user.username }} 醫師
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                    </button>
+                    <div class="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-xl py-2 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 border border-gray-100">
+                        <a href="{{ url_for('history') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-600">病患歷史</a>
+                        <a href="{{ url_for('setting') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-600">設定</a>
+                        <a href="{{ url_for('logout') }}" class="block px-4 py-2 text-sm text-red-600 hover:bg-red-50 border-t border-gray-50 mt-1 pt-2">登出</a>
+                    </div>
+                </div>
+            {% else %}
+                <a href="{{ url_for('login') }}" class="bg-gray-900 hover:bg-black text-white text-sm font-bold px-5 py-2 rounded-lg transition shadow-md">登入</a>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="w-full max-w-6xl px-8 fade-in">
+        
+        <div class="flex flex-col md:flex-row items-stretch justify-center gap-6 mb-6">
+            
+            {% if not is_history %}
+            <form action="{{ url_for('index') }}" method="post" enctype="multipart/form-data" class="flex-1 flex flex-col group cursor-pointer relative">
+                <input id="quick-upload" name="file" type="file" class="hidden" accept=".png, .jpg, .jpeg" onchange="this.form.submit(); document.getElementById('loading-overlay').classList.remove('hidden');">
+                <label for="quick-upload" class="flex-1 bg-white p-6 rounded-3xl shadow-sm border border-gray-100 flex flex-col transition duration-300 group-hover:shadow-lg group-hover:border-blue-300 cursor-pointer h-full">
+                    <div class="flex justify-between items-center mb-4">
+                        <h2 class="text-lg font-bold text-gray-800 group-hover:text-blue-600 transition">原始影像</h2>
+                        <span class="flex items-center gap-1 text-xs bg-gray-100 text-gray-500 px-2 py-1 rounded-md group-hover:bg-blue-100 group-hover:text-blue-600 transition">
+                            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+                            更換圖片
+                        </span>
+                    </div>
+                    <div class="flex-1 bg-gray-50 rounded-2xl overflow-hidden flex items-center justify-center border border-gray-100 relative">
+                        <img src="{{ url_for('uploaded_file', filename=original) }}" alt="原始圖片" class="max-h-[400px] w-auto object-contain transition duration-500 group-hover:scale-105 group-hover:opacity-90">
+                        <div class="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-40 transition-all duration-300 flex items-center justify-center backdrop-blur-[0px] group-hover:backdrop-blur-sm">
+                            <div class="transform translate-y-4 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition duration-300 text-center">
+                                <div class="w-12 h-12 bg-white rounded-full flex items-center justify-center mx-auto mb-2 shadow-lg text-blue-600"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg></div>
+                                <p class="text-white font-bold text-lg drop-shadow-md">點擊上傳新圖片</p>
+                            </div>
+                        </div>
+                        <div id="loading-overlay" class="hidden absolute inset-0 bg-white bg-opacity-80 flex flex-col items-center justify-center z-50">
+                            <div class="loader mb-2 border-t-blue-600 border-gray-200"></div>
+                            <p class="text-blue-600 font-bold animate-pulse">正在分析中...</p>
+                        </div>
+                    </div>
+                </label>
+            </form>
+            {% else %}
+            <div class="flex-1 bg-white p-6 rounded-3xl shadow-sm border border-gray-100 flex flex-col relative">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-lg font-bold text-gray-800">原始影像 (歷史紀錄)</h2>
+                </div>
+                <div class="flex-1 bg-gray-50 rounded-2xl overflow-hidden flex items-center justify-center border border-gray-100 relative">
+                    <img src="{{ url_for('uploaded_file', filename=original) }}" alt="原始圖片" class="max-h-[400px] w-auto object-contain">
+                </div>
+            </div>
+            {% endif %}
+
+            <div class="hidden md:flex flex-col justify-center items-center text-gray-300">
+                <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"></path></svg>
+            </div>
+
+            <div class="flex-1 bg-white p-6 rounded-3xl shadow-md border-2 border-blue-50 flex flex-col relative overflow-hidden">
+                <div class="absolute top-0 right-0 w-24 h-24 bg-blue-100 rounded-bl-full -mr-10 -mt-10 opacity-50"></div>
+                <div class="flex justify-between items-center mb-4 relative z-10">
+                    <h2 class="text-lg font-bold text-gray-800">分割結果</h2>
+                    <span class="text-xs bg-blue-100 text-blue-600 px-2 py-1 rounded-md font-bold">AI Result</span>
+                </div>
+                <div class="flex-1 bg-gray-900 rounded-2xl overflow-hidden flex items-center justify-center relative shadow-inner">
+                    <img src="{{ url_for('static', filename='results/' + result) }}" alt="預測結果" class="max-h-[400px] w-auto object-contain">
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-4 md:p-6 flex flex-col md:flex-row items-center justify-between gap-4 fade-in" style="animation-delay: 0.1s;">
+            
+            <div class="flex items-center gap-4 flex-1 w-full md:w-auto">
+                <div class="w-12 h-12 bg-blue-50 rounded-full flex items-center justify-center flex-shrink-0 text-blue-600">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                </div>
+                <div>
+                    <h3 class="px-6 py-2 text-sm text-gray-400 font-bold uppercase tracking-wider">診斷分析報告</h3>
+                    <div class="relative overflow-x-auto">
+                        <table class="w-full text-sm text-left rtl:text-right text-gray-700">
+                            <thead class="text-sm text-gray-500">
+                                <tr>
+                                    <th scope="col" class="px-6 py-1 font-semibold">腫瘤種類</th>
+                                    <th scope="col" class="px-6 py-1 font-semibold">信心程度</th>
+                                    <th scope="col" class="px-6 py-1 font-semibold">分割模型</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td class="px-6 font-bold">{{label}}</td>
+                                    <td class="px-6 font-bold">{{conf}}%</td>
+                                    <td class="px-6 font-bold">{{model}}</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div class="hidden md:block w-px h-12 bg-gray-200 mx-2"></div>
+
+            <div class="flex gap-3 w-full md:w-auto mt-4 md:mt-0">
+                
+                <button onclick="openSaveModal()" class="flex-1 md:flex-none flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl transition shadow-lg transform active:scale-95">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"></path></svg>
+                    <span class="font-bold tracking-wide">
+                        {% if not is_history %}存檔{% else %}修改患者{% endif %}
+                    </span>
+                </button>
+
+                <a href="{{ url_for('download_file', filename=result) }}" class="flex-1 md:flex-none group flex items-center justify-center gap-3 bg-gray-900 hover:bg-black text-white px-6 py-3 rounded-xl transition shadow-lg transform active:scale-95">
+                    <span class="font-bold tracking-wide">下載結果</span>
+                    <div class="bg-white bg-opacity-20 rounded-full p-1 group-hover:bg-opacity-30 transition">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                    </div>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div id="saveModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-[100] hidden flex items-center justify-center opacity-0 transition-opacity duration-300">
+        <div class="bg-white rounded-3xl shadow-2xl w-full max-w-md p-6 transform scale-95 transition-transform duration-300" id="saveModalContent">
+            
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-xl font-bold text-gray-800">
+                    {% if not is_history %}儲存分析紀錄{% else %}修改照片所屬患者{% endif %}
+                </h3>
+                <button onclick="closeSaveModal()" class="text-gray-400 hover:text-gray-600"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg></button>
+            </div>
+
+            <form action="{% if not is_history %}{{ url_for('save_record') }}{% else %}{{ url_for('reassign_photo') }}{% endif %}" method="POST">
+                
+                {% if is_history %}
+                <input type="hidden" name="photo_id" value="{{ photo_id }}">
+                <p class="text-sm text-gray-500 mb-4">目前所屬病患：<span class="font-bold text-gray-800">{{ current_patient_name }}</span></p>
+                {% else %}
+                <input type="hidden" name="original" value="{{ original }}">
+                <input type="hidden" name="result" value="{{ result }}">
+                <input type="hidden" name="tumor_type" value="{{ tumor_type }}">
+                <input type="hidden" name="conf" value="{{ conf }}">
+                <input type="hidden" name="model" value="{{ model }}">
+                {% endif %}
+
+                <div class="mb-5 relative">
+                    <label class="block text-sm font-bold text-gray-700 mb-2">搜尋並選擇患者</label>
+                    <input type="hidden" name="patient_id" id="patientIdInput">
+                    <input type="text" id="patientSearch" name="patient_name" autocomplete="off" placeholder="輸入病患姓名..." class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none transition">
+                    
+                    <ul id="searchResults" class="absolute z-10 w-full bg-white border border-gray-200 rounded-xl shadow-lg mt-1 hidden max-h-48 overflow-y-auto"></ul>
+                </div>
+
+                {% if not is_history and session.get('last_patient_id') %}
+                <div class="mb-5 p-3 bg-blue-50 border border-blue-100 text-blue-700 rounded-xl text-sm cursor-pointer hover:bg-blue-100 transition flex items-center gap-2" onclick="selectLastPatient('{{ session.get(&quot;last_patient_id&quot;) }}', '{{ session.get(&quot;last_patient_name&quot;) }}')">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    <span><span class="font-bold">上次儲存:</span> {{ session.get('last_patient_name') }} (點擊帶入)</span>
+                </div>
+                {% endif %}
+
+                <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl transition shadow-md">
+                    確認
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        const modal = document.getElementById('saveModal');
+        const modalContent = document.getElementById('saveModalContent');
+        const searchInput = document.getElementById('patientSearch');
+        const patientIdInput = document.getElementById('patientIdInput');
+        const searchResults = document.getElementById('searchResults');
+
+        function openSaveModal() {
+            modal.classList.remove('hidden');
+            setTimeout(() => { modal.classList.remove('opacity-0'); modalContent.classList.remove('scale-95'); }, 10);
+        }
+
+        function closeSaveModal() {
+            modal.classList.add('opacity-0'); modalContent.classList.add('scale-95');
+            setTimeout(() => { modal.classList.add('hidden'); }, 300);
+        }
+
+        function selectLastPatient(id, name) {
+            patientIdInput.value = id;
+            searchInput.value = name;
+            searchResults.classList.add('hidden');
+        }
+
+        searchInput.addEventListener('input', async function() {
+            const query = this.value.trim();
+            // 如果使用者自行打字修改，清空 ID，讓後端去創建新病患
+            patientIdInput.value = ''; 
+            
+            if (query.length === 0) {
+                searchResults.classList.add('hidden');
+                return;
+            }
+
+            try {
+                const response = await fetch(`/api/search_patient?q=${encodeURIComponent(query)}`);
+                const patients = await response.json();
+                
+                searchResults.innerHTML = '';
+                if (patients.length > 0) {
+                    patients.forEach(p => {
+                        const li = document.createElement('li');
+                        li.className = "px-4 py-3 hover:bg-blue-50 cursor-pointer text-gray-700 font-medium border-b last:border-0 flex justify-between";
+                        // 顯示名稱，同時綁定點擊事件將 ID 寫入隱藏欄位
+                        li.innerHTML = `<span>${p.name}</span><span class="text-xs text-gray-400">ID: ${p.id}</span>`;
+                        li.onclick = () => {
+                            searchInput.value = p.name;
+                            patientIdInput.value = p.id; // ✨ 確實寫入 ID
+                            searchResults.classList.add('hidden');
+                        };
+                        searchResults.appendChild(li);
+                    });
+                    searchResults.classList.remove('hidden');
+                } else {
+                    searchResults.innerHTML = '<li class="px-4 py-3 text-gray-400 text-sm">找不到相符紀錄，確認送出將新增為新病患</li>';
+                    searchResults.classList.remove('hidden');
+                }
+            } catch (error) { console.error("搜尋錯誤", error); }
+        });
+
+        document.addEventListener('click', function(e) {
+            if (!searchInput.contains(e.target) && !searchResults.contains(e.target)) {
+                searchResults.classList.add('hidden');
+            }
+        });
+    </script>
+</body>
+</html>

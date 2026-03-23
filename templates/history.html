@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <title>分析結果 - 醫療影像分割系統</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .fade-in { animation: fadeIn 0.6s cubic-bezier(0.16, 1, 0.3, 1); }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        .loader { border: 3px solid rgba(255,255,255,0.3); border-radius: 50%; border-top: 3px solid #ffffff; width: 24px; height: 24px; animation: spin 1s linear infinite; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    </style>
+</head>
+
+<body class="bg-gray-50 min-h-screen flex flex-col items-center font-sans text-gray-700 pt-24 pb-10">
+    
+    <div class="fixed top-0 left-0 w-full bg-white/90 backdrop-blur-md z-50 shadow-sm border-b border-gray-200 transition-all duration-300">
+        <div class="max-w-6xl mx-auto px-8 h-16 flex justify-between items-center">
+            <div>
+                <h1 class="text-xl font-extrabold tracking-tight text-gray-900 flex items-center gap-2">
+                    <a href="{{ url_for('index') }}" class="flex items-center gap-2">
+                        <span class="text-blue-600 text-2xl">●</span> 醫療影像分割系統
+                    </a>
+                </h1>
+            </div>
+            
+            {% if current_user %}
+                <div class="relative group">
+                    <button class="flex items-center gap-2 text-gray-700 hover:text-blue-600 font-bold px-3 py-2 rounded-lg hover:bg-gray-50 transition">
+                        {{ current_user.username }} 醫師
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                    </button>
+                    <div class="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-xl py-2 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 border border-gray-100">
+                        <a href="{{ url_for('history') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-600">病患歷史</a>
+                        <a href="{{ url_for('setting') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-600">設定</a>
+                        <a href="{{ url_for('logout') }}" class="block px-4 py-2 text-sm text-red-600 hover:bg-red-50 border-t border-gray-50 mt-1 pt-2">登出</a>
+                    </div>
+                </div>
+            {% else %}
+                <a href="{{ url_for('login') }}" class="bg-gray-900 hover:bg-black text-white text-sm font-bold px-5 py-2 rounded-lg transition shadow-md">登入</a>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="w-full max-w-6xl mx-auto px-8 pt-24 pb-10">
+        <h2 class="text-2xl font-bold text-gray-800 mb-6">病患歷史紀錄</h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {% for data in history_data %}
+            <div class="bg-white rounded-3xl p-6 shadow-sm border border-gray-100">
+                <h3 class="text-lg font-extrabold text-blue-600 mb-2 flex items-center gap-2 group">
+                    <span>{{ data.patient.name }}</span>
+                    <button onclick="renamePatient('{{ data.patient.id }}', '{{ data.patient.name }}')" class="opacity-0 group-hover:opacity-100 text-gray-400 hover:text-blue-600 transition">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
+                    </button>
+                </h3>
+
+                <p class="text-xs text-gray-400 mb-4">建檔時間: {{ data.patient.created_at[:10] }}</p>
+                
+                <div class="space-y-3">
+                    {% for photo in data.photos %}
+                    <a href="{{ url_for('view_history_photo', photo_id=photo.id) }}" class="flex items-center gap-3 p-3 bg-gray-50 rounded-xl hover:bg-blue-50 transition border border-gray-100">
+                        <div class="w-12 h-12 bg-gray-200 rounded-lg overflow-hidden shrink-0">
+                            <img src="{{ url_for('uploaded_file', filename=photo.original_image_path) }}" class="w-full h-full object-cover">
+                        </div>
+                        <div>
+                            <p class="text-sm font-bold text-gray-700">{{ photo.tumor_type }}</p>
+                            <p class="text-xs text-gray-500">{{ photo.created_at[:16] }}</p>
+                        </div>
+                    </a>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    
+    <form id="renameForm" action="{{ url_for('rename_patient') }}" method="POST" class="hidden">
+        <input type="hidden" name="patient_id" id="rename_id">
+        <input type="hidden" name="new_name" id="rename_name">
+    </form>
+    <script>
+        function renamePatient(id, oldName) {
+            const newName = prompt("請輸入新的病患名稱:", oldName);
+            if (newName && newName.trim() !== "" && newName.trim() !== oldName) {
+                document.getElementById('rename_id').value = id;
+                document.getElementById('rename_name').value = newName.trim();
+                document.getElementById('renameForm').submit();
+            }
+        }
+    </script>
+</body>

@@ -1,0 +1,5 @@
+/.vscode
+/static/results
+/uploads
+*.pth
+__pycache__/

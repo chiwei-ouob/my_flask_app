@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8"><title>登入 - 醫療影像分割系統</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-50 flex items-center justify-center h-screen">
+    <div class="fixed top-0 left-0 w-full bg-white/90 backdrop-blur-md z-50 shadow-sm border-b border-gray-200 transition-all duration-300">
+        <div class="max-w-6xl mx-auto px-8 h-16 flex justify-between items-center">
+            <div>
+                <h1 class="text-xl font-extrabold tracking-tight text-gray-900 flex items-center gap-2">
+                    <a href="{{ url_for('index') }}" ><span class="text-blue-600 text-2xl">●</span> 醫療影像分割系統</a>
+                </h1>
+            </div>
+        </div>
+    </div>
+
+    <div class="bg-white p-8 rounded-3xl shadow-xl w-96 border border-gray-100">
+        <h2 class="text-2xl font-bold text-center text-gray-800 mb-6">醫師登入系統</h2>
+        
+        {% if msg %}
+        <div class="mb-4 text-center text-sm font-bold text-{{ msg_color }}-600 bg-{{ msg_color }}-50 py-2 rounded-lg">{{ msg }}</div>
+        {% endif %}
+
+        <form method="post" action="{{ url_for('login') }}" class="space-y-4">
+            <input type="text" name="username" placeholder="帳號" required class="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-blue-500 outline-none">
+            <input type="password" name="password" placeholder="密碼" required class="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-blue-500 outline-none">
+            
+            <div class="flex gap-2 pt-2">
+                <button type="submit" name="action" value="login" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl transition">登入</button>
+                <button type="submit" name="action" value="register" class="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold py-3 rounded-xl transition">註冊</button>
+            </div>
+        </form>
+    </div>
+</body>
+</html>
