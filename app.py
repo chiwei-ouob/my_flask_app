@@ -11,7 +11,7 @@ import jwt
 import datetime
 from functools import wraps
 from flask import make_response, session, jsonify # 處理 Cookie 等
-from db import init_db, get_db_connection, register_doctor, verify_doctor, get_or_create_patient, add_photo, get_doctor_history, get_photo_by_id, update_doctor_password, soft_delete_patient, soft_delete_doctor, search_patients_by_name, update_patient_name, update_photo_patient
+from db import init_db, register_doctor, update_doctor_display_name, verify_doctor, get_or_create_patient, add_photo, get_doctor_history, get_photo_by_id, update_doctor_password, soft_delete_patient, soft_delete_doctor, search_patients_by_name, update_patient_name, update_photo_patient
 
 # --- Path Setup ---
 # Resolve the absolute path of this file's directory and register sub-modules
@@ -296,7 +296,10 @@ def login():
         password = request.form.get('password')
         
         if action == 'register':
-            if register_doctor(username, password):
+            display_name = username
+            if not display_name:
+                display_name = username  # 防呆機制：若沒填則預設為帳號
+            if register_doctor(username, password, display_name):
                 return render_template('login.html', msg="註冊成功，請登入！", msg_color="green")
             return render_template('login.html', msg="帳號已存在！", msg_color="red")
             
@@ -309,6 +312,7 @@ def login():
                 token = jwt.encode({
                     'doctor_id': doctor['id'],
                     'username': doctor['username'],
+                    'display_name': doctor['display_name'],
                     'exp': datetime.datetime.utcnow() + datetime.timedelta(days=1)    #DOTO-
                 }, app.config['SECRET_KEY'], algorithm="HS256")
                 
@@ -363,6 +367,24 @@ def setting(doctor_id):
         action = request.form.get('action')
         if action == 'change_pwd':
             update_doctor_password(doctor_id, request.form.get('new_password'))
+        elif action == 'change_name':
+            # 更新顯示名稱
+            new_name = request.form.get('new_name')
+            if new_name:
+                update_doctor_display_name(doctor_id, new_name)
+                
+                # 更新 Cookie 中的 JWT Token，否則前端導覽列不會立刻改變
+                token = request.cookies.get('token')
+                data = jwt.decode(token, app.config['SECRET_KEY'], algorithms=["HS256"])
+                data['display_name'] = new_name # 替換成新名字
+                
+                # 重新簽署 Token
+                new_token = jwt.encode(data, app.config['SECRET_KEY'], algorithm="HS256")
+                
+                # 建立 Response 並設定新 Cookie
+                resp = make_response(redirect(url_for('setting')))
+                resp.set_cookie('token', new_token, httponly=True)
+                return resp
         elif action == 'delete_patient':
             soft_delete_patient(request.form.get('patient_id'), doctor_id)
         elif action == 'delete_account':

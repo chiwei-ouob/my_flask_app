@@ -27,7 +27,7 @@
             {% if current_user %}
                 <div class="relative group">
                     <button class="flex items-center gap-2 text-gray-700 hover:text-blue-600 font-bold px-3 py-2 rounded-lg hover:bg-gray-50 transition">
-                        {{ current_user.username }} 醫師
+                        {{ current_user.display_name }} 醫師
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
                     </button>
                     <div class="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-xl py-2 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 border border-gray-100">
@@ -44,6 +44,16 @@
 
     <div class="w-full max-w-xl mx-auto px-8 pt-24 pb-10">
         <h2 class="text-2xl font-bold text-gray-800 mb-6">系統設定</h2>
+        
+        <form method="post" class="bg-white p-6 rounded-3xl shadow-sm border border-gray-100 mb-6 relative overflow-hidden">
+            <div class="absolute top-0 right-0 w-16 h-16 bg-blue-50 rounded-bl-full -mr-4 -mt-4 opacity-50"></div>
+            <h3 class="font-bold text-gray-800 mb-1 text-lg">個人檔案</h3>
+            <p class="text-sm text-gray-500 mb-4">目前的顯示名稱：<span class="font-bold text-blue-600">{{ current_user.display_name }}</span></p>        
+            <div class="flex gap-3">
+                <input type="text" name="new_name" placeholder="輸入新的醫師姓名" required class="flex-1 px-4 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition">
+                <button type="submit" name="action" value="change_name" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-xl text-sm font-bold shadow-md transition transform active:scale-95">更新名稱</button>
+            </div>
+        </form>
         
         <form method="post" class="bg-white p-6 rounded-3xl shadow-sm border border-gray-100 mb-6">
             <h3 class="font-bold text-gray-700 mb-3">修改密碼</h3>

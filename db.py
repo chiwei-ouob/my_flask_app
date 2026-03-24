@@ -18,6 +18,7 @@ def init_db():
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             username TEXT UNIQUE NOT NULL,
             password TEXT NOT NULL,
+            display_name TEXT NOT NULL,  -- 介面顯示的名稱
             created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
             is_deleted INTEGER DEFAULT 0
         )
@@ -54,12 +55,13 @@ def init_db():
     conn.close()
 
 # --- 醫師 (Doctor) 相關操作 ---
-def register_doctor(username, password):
+def register_doctor(username, password, display_name):
     conn = get_db_connection()
     cursor = conn.cursor()
     hashed_pw = generate_password_hash(password)
     try:
-        cursor.execute("INSERT INTO Doctor (username, password) VALUES (?, ?)", (username, hashed_pw))
+        cursor.execute("INSERT INTO Doctor (username, password, display_name) VALUES (?, ?, ?)", 
+                       (username, hashed_pw, display_name))
         conn.commit()
         return True
     except sqlite3.IntegrityError:
@@ -75,6 +77,13 @@ def verify_doctor(username, password):
         return dict(doctor)
     return None
 
+def update_doctor_display_name(doctor_id, new_name):
+    """更新醫師的顯示名稱"""
+    conn = get_db_connection()
+    conn.execute("UPDATE Doctor SET display_name = ? WHERE id = ?", (new_name, doctor_id))
+    conn.commit()
+    conn.close()
+    
 def update_doctor_password(doctor_id, new_password):
     conn = get_db_connection()
     hashed_pw = generate_password_hash(new_password)
