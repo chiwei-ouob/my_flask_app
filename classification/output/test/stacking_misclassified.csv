@@ -1,0 +1,2 @@
+Image,True_Label,Predicted_Label,Correct,Prob_GBM,Prob_MG,Prob_PT,Prob_Normal
+MG/MG_86.png,MG,Normal,No,0.0000,0.2200,0.0200,0.7600

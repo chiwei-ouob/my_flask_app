@@ -15,16 +15,15 @@ from PIL import Image
 from torchvision import transforms
 
 # === 路徑配置 ===
-# BASE_DIR = r"E:\BT_segmentation\classification"
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+BASE_DIR = r"E:\BT_segmentation_V3\classification"
 CHECKPOINT_DIR = os.path.join(BASE_DIR, "checkpoints")
 
 # === 類別映射 ===
-CLASS_NAMES = ["GBM", "MG", "PA", "Normal"]
+CLASS_NAMES = ["GBM", "MG", "PT", "Normal"]
 CLASS_FULL_NAMES = {
     "GBM": "Glioblastoma (GBM)",
     "MG": "Meningioma (MG)",
-    "PA": "Pituitary Tumor (PT)",
+    "PT": "Pituitary Tumor (PT)",
     "Normal": "Normal (No Tumor)"
 }
 NUM_CLASSES = 4

@@ -49,6 +49,11 @@ python split_data.py
 
 ```
 
+增強訓練影像
+python enhance_training_data.py
+完整 enhanced_datasets 
+python complete_enhanced_datasets.py
+
 ### 第三步：模型訓練
 
 你可以修改腳本中的 `selected_models` 來選擇要訓練的模型（如 `resnet50`, `tf_efficientnetv2_s`）：
@@ -101,7 +106,7 @@ python prediction.py --image "你的圖片路徑.jpg" --model resnest50d --show_
 
 * **生成熱力圖**：觀察模型關注影像的哪些區域。
 ```bash
-python gradcam_resnet&resnest.py
+python gradcam_resnet_and_resnest.py
 # 或
 python gradcam_efficientnetv2.py
 

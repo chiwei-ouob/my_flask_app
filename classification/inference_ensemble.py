@@ -22,8 +22,8 @@ from tqdm import tqdm
 from collections import Counter
 
 # === 路徑配置 ===
-BASE_DIR = r"E:\BT_segmentation\classification"
-DATASET_ROOT = os.path.join(BASE_DIR, "datasets")
+BASE_DIR = r"E:\BT_segmentation_V3\classification"
+DATASET_ROOT = os.path.join(BASE_DIR, "enhanced_datasets")
 LISTS_DIR = os.path.join(BASE_DIR, "lists")
 CHECKPOINT_DIR = os.path.join(BASE_DIR, "checkpoints")
 

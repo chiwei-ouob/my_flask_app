@@ -1,0 +1,15 @@
+==================================================
+🏆 Stacking Best Model Configuration Details
+==================================================
+
+Configuration Name : RF_depth=None
+Meta Model Type    : rf
+K-Folds Used       : 10
+Specific Parameters: {'max_depth': None, 'n_estimators': 50}
+
+--------------------------------------------------
+Test Accuracy      : 0.9907
+Test F1-score      : 0.9916
+Test Macro-AUC     : 1.0000
+--------------------------------------------------
+Model File Path    : E:\BT_segmentation_V3\classification\checkpoints\meta_model_kfold_best.pkl

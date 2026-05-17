@@ -2,8 +2,8 @@ import os
 import random
 
 # === 路徑配置 ===
-BASE_DIR = r"E:\BT_segmentation\classification"
-DATASET_ROOT = os.path.join(BASE_DIR, "datasets")
+BASE_DIR = r"E:\BT_segmentation_V3\classification"
+DATASET_ROOT = os.path.join(BASE_DIR, "enhanced_datasets")
 LISTS_DIR = os.path.join(BASE_DIR, "lists")
 
 # 建立 lists 資料夾（如果不存在）
