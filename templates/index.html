@@ -5,13 +5,30 @@
     <title>醫療影像分割系統</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
+        /* 動畫 */
         .fade-in { animation: fadeIn 0.5s ease-in-out; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-    </style>
+        
+        .loader {
+                border: 4px solid rgba(255, 255, 255, 0.2);
+                border-radius: 50%;
+                border-top: 4px solid #3b82f6; /* Tailwind blue-500 */
+                width: 48px;
+                height: 48px;
+                animation: spin 1s linear infinite;
+            }
+            @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        </style>
 </head>
 
 <body class="bg-gray-50 min-h-screen flex flex-col items-center font-sans text-gray-700 pt-24 pb-10">
-    
+    <!-- Loading screen -->
+    <div id="loading-overlay" class="fixed inset-0 bg-gray-900/70 backdrop-blur-sm z-[100] hidden flex flex-col items-center justify-center transition-opacity duration-300">
+        <div class="loader mb-4 shadow-lg"></div>
+        <p class="text-white font-bold text-xl tracking-wider animate-pulse drop-shadow-md">正在進行影像分析，請稍候...</p>
+        <p class="text-gray-300 text-sm mt-2">這可能需要幾秒鐘的時間</p>
+    </div>
+
     <div class="fixed top-0 left-0 w-full bg-white/90 backdrop-blur-md z-50 shadow-sm border-b border-gray-200 transition-all duration-300">
         <div class="max-w-6xl mx-auto px-8 h-16 flex justify-between items-center">
             <div>
@@ -75,7 +92,7 @@
                     </div>
 
                     <button type="submit" class="mt-6 w-full bg-gray-900 hover:bg-black text-white font-bold py-3 px-6 rounded-xl transition shadow-lg transform active:scale-95">
-                        醫學影像電腦運算
+                        開始分析
                     </button>
                 </form>
             </div>
@@ -100,12 +117,27 @@
         const placeholder = document.getElementById('upload-placeholder');
         const fileNameDisplay = document.getElementById('file-name');
 
+        const form = document.querySelector('form');
+        const loadingOverlay = document.getElementById('loading-overlay');
+
         input.addEventListener('change', (e) => {
             if(e.target.files.length > 0){
                 placeholder.classList.add('hidden');
                 fileNameDisplay.innerText = e.target.files[0].name;
                 fileNameDisplay.classList.remove('hidden');
             }
+        });
+
+        form.addEventListener('submit', (e) => {
+            // 防呆：如果沒有選擇檔案則阻擋
+            if (input.files.length === 0) {
+                e.preventDefault(); 
+                // alert("請先點擊上方虛線框選擇要分析的影像！");
+                return;
+            }
+            
+            // 如果有檔案，顯示 Loading 遮罩
+            loadingOverlay.classList.remove('hidden');
         });
     </script>
 </body>
