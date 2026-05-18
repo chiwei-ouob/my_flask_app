@@ -13,17 +13,18 @@ import timm
 import numpy as np
 from PIL import Image
 from torchvision import transforms
+import joblib
 
 # === 路徑配置 ===
 BASE_DIR = r"E:\BT_segmentation_V3\classification"
 CHECKPOINT_DIR = os.path.join(BASE_DIR, "checkpoints")
 
 # === 類別映射 ===
-CLASS_NAMES = ["GBM", "MG", "PT", "Normal"]
+CLASS_NAMES = ["GBM", "MG", "PA", "Normal"]
 CLASS_FULL_NAMES = {
     "GBM": "Glioblastoma (GBM)",
     "MG": "Meningioma (MG)",
-    "PT": "Pituitary Tumor (PT)",
+    "PA": "Pituitary Tumor (PA)",
     "Normal": "Normal (No Tumor)"
 }
 NUM_CLASSES = 4
@@ -92,6 +93,32 @@ def predict_ensemble(model_names, image_tensor, device):
     return avg_probs
 
 
+def predict_stacking(base_models, meta_model, image_tensor, device):
+    """
+    新增 - 執行 Stacking 堆疊預測
+    1. 收集所有 base_models 的輸出機率
+    2. 串接成 meta_feature
+    3. 送入 meta_model 進行最終預測
+    """
+    image_tensor = image_tensor.to(device)
+    outputs = []
+    
+    with torch.no_grad():
+        for model in base_models:
+            # 取得各個 base model 的預測機率，轉為 numpy 陣列
+            prob = F.softmax(model(image_tensor), dim=1).cpu().numpy().squeeze()
+            outputs.append(prob)
+    
+    # 串接所有機率成為一維的 meta feature (例如 3個模型 * 4個類別 = 12個特徵)
+    # 並 reshape 成 (1, -1) 以符合 sklearn 模型的輸入格式
+    meta_feature = np.concatenate(outputs).reshape(1, -1)
+    
+    # 使用 meta model (如 Random Forest) 進行最終預測，取得各類別機率
+    final_probs = meta_model.predict_proba(meta_feature)[0]
+    
+    return final_probs
+
+
 def print_prediction_result(probs, image_path, show_probs=False):
     """打印預測結果"""
     predicted_class_idx = np.argmax(probs)
@@ -124,7 +151,7 @@ def print_prediction_result(probs, image_path, show_probs=False):
     print("-"*70)
     print("  0 - GBM:    Glioblastoma (惡性腦膠質瘤)")
     print("  1 - MG:     Meningioma (腦膜瘤)")
-    print("  2 - PT:     Pituitary Tumor (腦垂體瘤)")
+    print("  2 - PA:     Pituitary Tumor (腦垂體瘤)")
     print("  3 - Normal: No Tumor Detected (正常/無腫瘤)")
     print("="*70 + "\n")
 

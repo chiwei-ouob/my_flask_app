@@ -6,7 +6,8 @@ from flask import Flask, render_template, request, redirect, url_for, send_from_
 from werkzeug.utils import secure_filename
 from ultralytics import YOLO
 import shutil
-from classification.prediction import load_model, preprocess_image, predict_single_model, CLASS_NAMES
+import joblib
+from classification.prediction import load_model, preprocess_image, predict_stacking, CLASS_NAMES
 import jwt
 import datetime
 from functools import wraps
@@ -60,6 +61,16 @@ for model_info in ENSEMBLE_MODELS_INFO:
 
 print(f"Classification models loaded: {len(loaded_classifiers)}/{len(ENSEMBLE_MODELS_INFO)}\n")
 
+# ✨ 新增：載入 Stacking 的 Meta Model
+print("Loading Stacking Meta Model...")
+META_MODEL_PATH = os.path.join(CLF_CHECKPOINT_DIR, 'meta_model_kfold_best.pkl')
+try:
+    meta_model = joblib.load(META_MODEL_PATH)
+    print("  [OK] Meta Model loaded successfully")
+except Exception as e:
+    print(f"  [FAILED] Meta Model: {e}")
+    meta_model = None
+
 # --- Load Segmentation Models (YOLOv8) ---
 # One YOLO model is loaded per tumor type; stored in a dict keyed by tumor type
 seg_models = {}
@@ -94,15 +105,12 @@ def run_classification(filepath):  # 分類腫瘤種類
 
     img_tensor = preprocess_image(filepath)
 
-    # Collect probability distributions from each model
-    all_probs = [predict_single_model(model, img_tensor, device) for model in loaded_classifiers]
+    # 使用 Stacking Meta Model 進行綜合預測
+    final_probs = predict_stacking(loaded_classifiers, meta_model, img_tensor, device)
 
-    # Average the probabilities across all models (soft voting)
-    avg_probs = np.mean(all_probs, axis=0)
-
-    pred_idx = np.argmax(avg_probs)
+    pred_idx = np.argmax(final_probs)
     pred_class = CLASS_NAMES[pred_idx]
-    confidence = avg_probs[pred_idx] * 100
+    confidence = final_probs[pred_idx] * 100
 
     zh_map = {
         "GBM": "膠質母細胞瘤 (GBM)",
